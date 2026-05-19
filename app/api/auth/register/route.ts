@@ -9,16 +9,28 @@ export async function POST(req: NextRequest) {
     console.log("DB Connected");
 
     const body = await req.json();
-    let { name, email, password, mobile } = body;
+    let { name, email, mobile, role } = body;
+    const { password } = body;
 
     name = name?.trim();
     email = email?.trim().toLowerCase();
-    password = password?.trim();
     mobile = mobile?.trim();
 
     if (!name || !email || !password || !mobile) {
       return NextResponse.json(
         { success: false, message: "All fields are required" },
+        { status: 400 },
+      );
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Invalid email format",
+        },
         { status: 400 },
       );
     }
@@ -68,6 +80,7 @@ export async function POST(req: NextRequest) {
           name: newUser.name,
           email: newUser.email,
           mobile: newUser.mobile,
+          role: newUser.role,
         },
       },
       { status: 201 },
@@ -78,7 +91,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        message: `Internal Server Error ${error}`,
+        message: `Internal Server Error`,
       },
       { status: 500 },
     );

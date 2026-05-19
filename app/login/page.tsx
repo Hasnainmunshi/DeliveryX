@@ -21,31 +21,24 @@ type propType = {
   onSuccess?: () => void;
 };
 
-function RegisterForm({ previousStep, onSuccess }: propType) {
+function Login({ previousStep, onSuccess }: propType) {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
-    name: "",
     email: "",
     password: "",
-    mobile: "",
   });
   const [errors, setErrors] = useState({
-    name: "",
     email: "",
     password: "",
-    mobile: "",
   });
   const [serverError, setServerError] = useState("");
 
   // validate
   const validate = () => {
-    const newErrors = { name: "", email: "", password: "", mobile: "" };
-    if (!form.name.trim()) newErrors.name = "Name is Required";
+    const newErrors = { email: "", password: "" };
     if (!form.email.includes("@")) newErrors.email = "Valid email Required";
     if (form.password.length < 6) newErrors.password = "Min 6 characters";
-    if (form.mobile.length < 11)
-      newErrors.mobile = "Valid mobile number required";
     setErrors(newErrors);
     return !Object.values(newErrors).some(Boolean);
   };
@@ -56,24 +49,17 @@ function RegisterForm({ previousStep, onSuccess }: propType) {
     setLoading(true);
     setServerError("");
     try {
-      const result = await axios.post("/api/auth/register", form);
+      const result = await axios.post("/api/auth/login", form);
       console.log("data", result.data);
       onSuccess?.();
     } catch (err: any) {
-      setServerError(err.response?.data?.message || "Register failed");
+      setServerError(err.response?.data?.message || "Login failed");
     } finally {
       setLoading(false);
     }
   };
 
   const fields = [
-    {
-      icon: User,
-      key: "name",
-      type: "text",
-      placeholder: "Your name",
-      autoComplete: "off",
-    },
     {
       icon: Mail,
       key: "email",
@@ -87,13 +73,6 @@ function RegisterForm({ previousStep, onSuccess }: propType) {
       type: "password",
       placeholder: "Your password",
       autoComplete: "new-password",
-    },
-    {
-      icon: Phone,
-      key: "mobile",
-      type: "tel",
-      placeholder: "Your mobile",
-      autoComplete: "off",
     },
   ] as const;
   return (
@@ -111,9 +90,9 @@ function RegisterForm({ previousStep, onSuccess }: propType) {
         className="w-full max-w-xl p-12 space-y-5 shadow-xl"
       >
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-green-700">Create Account</h1>
+          <h1 className="text-3xl font-bold text-green-700">Welcome Back</h1>
           <p className="flex justify-center items-center text-sm text-gray-500 ">
-            Join DeliverX today <Leaf className="w-5 h-5 text-green-400" />{" "}
+            Login to DeliverX <Leaf className="w-5 h-5 text-green-400" />{" "}
           </p>
         </div>
         {serverError && (
@@ -171,7 +150,7 @@ function RegisterForm({ previousStep, onSuccess }: propType) {
             ) : (
               <>
                 {" "}
-                Register <ArrowRight className=" w-4 h-4" />
+                Login <ArrowRight className=" w-4 h-4" />
               </>
             )}
           </motion.button>
@@ -190,10 +169,10 @@ function RegisterForm({ previousStep, onSuccess }: propType) {
             Already have an account ?
           </p>
           <Link
-            href="/login"
+            href="/register"
             className="text-green-600 text-sm font-semibold hover:underline"
           >
-            Login
+            Register
           </Link>
         </div>
       </motion.div>
@@ -201,4 +180,4 @@ function RegisterForm({ previousStep, onSuccess }: propType) {
   );
 }
 
-export default RegisterForm;
+export default Login;
