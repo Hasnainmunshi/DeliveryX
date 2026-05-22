@@ -1,5 +1,4 @@
 "use client";
-import axios from "axios";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -9,19 +8,18 @@ import {
   Leaf,
   Lock,
   Mail,
-  Phone,
-  User,
 } from "lucide-react";
+import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 
 type propType = {
   previousStep: (s: number) => void;
-  onSuccess?: () => void;
 };
 
-function Login({ previousStep, onSuccess }: propType) {
+function Login({ previousStep }: propType) {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -33,6 +31,9 @@ function Login({ previousStep, onSuccess }: propType) {
     password: "",
   });
   const [serverError, setServerError] = useState("");
+  const router = useRouter();
+  const session = useSession();
+  console.log("session", session);
 
   // validate
   const validate = () => {
@@ -43,17 +44,27 @@ function Login({ previousStep, onSuccess }: propType) {
     return !Object.values(newErrors).some(Boolean);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
     setServerError("");
+
     try {
-      const result = await axios.post("/api/auth/login", form);
-      console.log("data", result.data);
-      onSuccess?.();
-    } catch (err: any) {
-      setServerError(err.response?.data?.message || "Login failed");
+      const result = await signIn("credentials", {
+        email: form.email,
+        password: form.password,
+        redirect: false,
+      });
+      setLoading(false);
+
+      if (result?.error) {
+        setServerError("Invalid email or password");
+        return;
+      }
+      router.push("/");
+    } catch (error: any) {
+      setServerError("Login failed");
     } finally {
       setLoading(false);
     }
@@ -77,13 +88,6 @@ function Login({ previousStep, onSuccess }: propType) {
   ] as const;
   return (
     <div className="flex flex-col justify-center items-center min-h-screen  px-8">
-      <div
-        className="flex absolute top-6 left-6 items-center  gap-1 text-green-700 hover:text-green-800 transition-colors cursor-pointer"
-        onClick={() => previousStep(1)}
-      >
-        <ArrowLeft className="w-5 h-5" />
-        <span className="font-medium">Back</span>
-      </div>
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -98,7 +102,7 @@ function Login({ previousStep, onSuccess }: propType) {
         {serverError && (
           <p className="text-sm text-red-500 text-center">{serverError}</p>
         )}
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleLogin} className="space-y-3">
           {fields.map(
             ({ icon: Icon, key, type, placeholder, autoComplete }) => (
               <div key={key}>
@@ -142,8 +146,8 @@ function Login({ previousStep, onSuccess }: propType) {
           <motion.button
             whileTap={{ scale: 0.97 }}
             type="submit"
-            disabled={loading}
-            className="w-full inline-flex items-center justify-center gap-2 text-white bg-green-600 hover:bg-green-700 py-3 rounded-2xl shadow-lg transition-colors font-semibold text-base disabled:opacity-70"
+            disabled={loading || !form.email.trim() || !form.password.trim()}
+            className={`w-full inline-flex items-center justify-center gap-2 py-3 rounded-2xl shadow-lg transition-colors font-semibold text-base ${loading || !form.email.trim() || !form.password.trim() ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700 text-white"}`}
           >
             {loading ? (
               <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -166,7 +170,7 @@ function Login({ previousStep, onSuccess }: propType) {
         </button>
         <div className="flex justify-center items-center gap-0.5">
           <p className="text-center text-sm text-gray-500">
-            Already have an account ?
+            Want to create an account ?
           </p>
           <Link
             href="/register"

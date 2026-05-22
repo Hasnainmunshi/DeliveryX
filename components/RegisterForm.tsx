@@ -12,6 +12,7 @@ import {
   Phone,
   User,
 } from "lucide-react";
+import { signIn } from "next-auth/react";
 import Link from "next/link";
 import React, { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
@@ -50,7 +51,7 @@ function RegisterForm({ previousStep, onSuccess }: propType) {
     return !Object.values(newErrors).some(Boolean);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
@@ -119,7 +120,7 @@ function RegisterForm({ previousStep, onSuccess }: propType) {
         {serverError && (
           <p className="text-sm text-red-500 text-center">{serverError}</p>
         )}
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleRegister} className="space-y-3">
           {fields.map(
             ({ icon: Icon, key, type, placeholder, autoComplete }) => (
               <div key={key}>
@@ -163,8 +164,22 @@ function RegisterForm({ previousStep, onSuccess }: propType) {
           <motion.button
             whileTap={{ scale: 0.97 }}
             type="submit"
-            disabled={loading}
-            className="w-full inline-flex items-center justify-center gap-2 text-white bg-green-600 hover:bg-green-700 py-3 rounded-2xl shadow-lg transition-colors font-semibold text-base disabled:opacity-70"
+            disabled={
+              loading ||
+              !form.name.trim() ||
+              !form.email.trim() ||
+              !form.password.trim() ||
+              !form.mobile.trim()
+            }
+            className={`w-full inline-flex items-center justify-center gap-2  py-3 rounded-2xl shadow-lg transition-colors font-semibold text-base ${
+              loading ||
+              !form.name.trim() ||
+              !form.email.trim() ||
+              !form.password.trim() ||
+              !form.mobile.trim()
+                ? "bg-gray-400 cursor-not-allowed"
+                : "text-white bg-green-600 hover:bg-green-700"
+            }`}
           >
             {loading ? (
               <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -182,7 +197,7 @@ function RegisterForm({ previousStep, onSuccess }: propType) {
           <div className="flex-1 border-b border-gray-200"></div>
         </div>
         <button className="w-full flex items-center justify-center gap-2 border border-gray-300 py-2 rounded-xl text-sm font-medium hover:bg-gray-50 transition">
-          <FcGoogle className="w-5 h-5" />
+          <FcGoogle className="w-5 h-5" onClick={() => signIn("google")} />
           continue with google
         </button>
         <div className="flex justify-center items-center gap-0.5">

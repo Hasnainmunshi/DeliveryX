@@ -3,7 +3,8 @@ import mongoose, { Document } from "mongoose";
 export interface IUser extends Document {
   name: string;
   email: string;
-  password: string;
+  image?: string;
+  password?: string;
   mobile: string;
   role: "user" | "deliveryBoy" | "admin";
 }
@@ -27,9 +28,12 @@ const userSchema = new mongoose.Schema<IUser>(
       trim: true,
       match: [/^\S+@\S+\.\S+$/, "Invalid email"],
     },
+    image: {
+      type: String,
+    },
     password: {
       type: String,
-      required: true,
+      required: false,
       minlength: 6,
     },
     mobile: {
