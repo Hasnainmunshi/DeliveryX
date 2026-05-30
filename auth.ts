@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { connectDB } from "../lib/db";
-import User from "../models/userModel";
+import { connectDB } from "./lib/db";
+import User from "./models/userModel";
 import bcrypt from "bcryptjs";
 import Google from "next-auth/providers/google";
 
@@ -12,18 +12,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials, request) {
+      async authorize(credentials) {
         await connectDB();
-        const email = credentials.email;
-        const password = credentials.password as string;
-        const user = await User.findOne({ email });
-        if (!user) {
-          throw new Error("User not found");
+        const user = await User.findOne({ email: credentials.email });
+        if (!user) throw new Error("User not found");
+
+        if (user.provider === "google" || !user.password) {
+          throw new Error("Please sign in with Google");
         }
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-          throw new Error("Invalid password");
-        }
+
+        const isMatch = await bcrypt.compare(
+          credentials.password as string,
+          user.password,
+        );
+        if (!isMatch) throw new Error("Invalid password");
+
         return {
           id: user._id.toString(),
           name: user.name,
@@ -42,13 +45,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       try {
         if (account?.provider === "google") {
           await connectDB();
-          const existingUser = await User.findOne({ email: user.email });
+          let existingUser = await User.findOne({ email: user.email });
           if (!existingUser) {
-            await User.create({
+            existingUser = await User.create({
               name: user.name,
               email: user.email,
               image: user.image,
-              password: "",
+              provider: "google",
               role: "user",
             });
           }
@@ -57,7 +60,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
         return true;
       } catch (error) {
-        console.log(error);
+        console.error("SignIn callback error:", error);
         return false;
       }
     },
@@ -79,6 +82,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return session;
     },
+    authorized({ auth, request: { nextUrl } }) {
+      // ✅
+      const token = auth?.user;
+      const pathname = nextUrl.pathname; // ✅
+      const isLoggedIn = !!token;
+      const isAuthPage = pathname === "/login" || pathname === "/register";
+
+      if (isLoggedIn && isAuthPage) {
+        return Response.redirect(new URL("/", nextUrl));
+      }
+      if (!isLoggedIn && !isAuthPage) {
+        return Response.redirect(new URL("/login", nextUrl));
+      }
+      return true;
+    },
   },
   pages: {
     signIn: "/login",
@@ -88,5 +106,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     strategy: "jwt",
     maxAge: 10 * 24 * 60 * 60,
   },
-  secret: process.env.JWT_SECRET,
+  secret: process.env.AUTH_SECRET,
 });

@@ -5,8 +5,9 @@ export interface IUser extends Document {
   email: string;
   image?: string;
   password?: string;
-  mobile: string;
+  mobile?: string;
   role: "user" | "deliveryBoy" | "admin";
+  provider?: "credentials" | "google";
 }
 type SafeUser = Omit<IUser, "password"> & {
   password?: string;
@@ -38,12 +39,18 @@ const userSchema = new mongoose.Schema<IUser>(
     },
     mobile: {
       type: String,
-      required: [true, "Mobile number is required"],
+      required: false,
+      default: null,
     },
     role: {
       type: String,
       enum: ["user", "deliveryBoy", "admin"],
       default: "user",
+    },
+    provider: {
+      type: String,
+      enum: ["credentials", "google"],
+      default: "credentials",
     },
   },
   { timestamps: true },

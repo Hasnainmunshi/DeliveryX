@@ -196,8 +196,11 @@ function RegisterForm({ previousStep, onSuccess }: propType) {
           <p>or</p>
           <div className="flex-1 border-b border-gray-200"></div>
         </div>
-        <button className="w-full flex items-center justify-center gap-2 border border-gray-300 py-2 rounded-xl text-sm font-medium hover:bg-gray-50 transition">
-          <FcGoogle className="w-5 h-5" onClick={() => signIn("google")} />
+        <button
+          onClick={() => signIn("google")}
+          className="w-full flex items-center justify-center gap-2 border border-gray-300 py-2 rounded-xl text-sm font-medium hover:bg-gray-50 transition"
+        >
+          <FcGoogle className="w-5 h-5" />
           continue with google
         </button>
         <div className="flex justify-center items-center gap-0.5">

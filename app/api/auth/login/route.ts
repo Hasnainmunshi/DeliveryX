@@ -14,38 +14,40 @@ export async function POST(req: NextRequest) {
 
     if (!email || !password) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "Email and password required",
-        },
+        { success: false, message: "Email and password required" },
         { status: 400 },
       );
     }
+
     const user = await userModel.findOne({ email });
     if (!user) {
-      return NextResponse.json({
-        success: false,
-        message: "User not found",
-      });
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        { status: 404 },
+      );
+    }
+
+    if (user.provider !== "credentials" || !user.password) {
+      return NextResponse.json(
+        { success: false, message: "Please sign in with Google" },
+        { status: 400 },
+      );
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return NextResponse.json({
-        success: false,
-        message: "Invalid credentials",
-      });
+      return NextResponse.json(
+        { success: false, message: "Invalid credentials" },
+        { status: 401 },
+      );
     }
 
     const token = jwt.sign(
-      {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-      },
+      { id: user._id, email: user.email, role: user.role },
       process.env.JWT_SECRET as string,
       { expiresIn: "7d" },
     );
+
     return NextResponse.json({
       success: true,
       message: "Login successfully",
@@ -61,10 +63,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Login error", error);
     return NextResponse.json(
-      {
-        success: false,
-        message: `Internal server errror ${error}`,
-      },
+      { success: false, message: "Internal server error" },
       { status: 500 },
     );
   }
