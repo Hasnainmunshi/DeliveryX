@@ -83,9 +83,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session;
     },
     authorized({ auth, request: { nextUrl } }) {
-      // ✅
       const token = auth?.user;
-      const pathname = nextUrl.pathname; // ✅
+      const pathname = nextUrl.pathname;
       const isLoggedIn = !!token;
       const isAuthPage = pathname === "/login" || pathname === "/register";
 

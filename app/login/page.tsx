@@ -15,11 +15,7 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 
-type propType = {
-  previousStep: (s: number) => void;
-};
-
-function Login({ previousStep }: propType) {
+function Login() {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -32,8 +28,6 @@ function Login({ previousStep }: propType) {
   });
   const [serverError, setServerError] = useState("");
   const router = useRouter();
-  const session = useSession();
-  console.log("session", session);
 
   // validate
   const validate = () => {
@@ -43,6 +37,7 @@ function Login({ previousStep }: propType) {
     setErrors(newErrors);
     return !Object.values(newErrors).some(Boolean);
   };
+  const isDisabled = loading || !form.email.trim() || !form.password.trim();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,14 +51,13 @@ function Login({ previousStep }: propType) {
         password: form.password,
         redirect: false,
       });
-      setLoading(false);
 
       if (result?.error) {
         setServerError("Invalid email or password");
         return;
       }
       router.push("/");
-    } catch (error: any) {
+    } catch {
       setServerError("Login failed");
     } finally {
       setLoading(false);
@@ -146,7 +140,7 @@ function Login({ previousStep }: propType) {
           <motion.button
             whileTap={{ scale: 0.97 }}
             type="submit"
-            disabled={loading || !form.email.trim() || !form.password.trim()}
+            disabled={isDisabled}
             className={`w-full inline-flex items-center justify-center gap-2 py-3 rounded-2xl shadow-lg transition-colors font-semibold text-base ${loading || !form.email.trim() || !form.password.trim() ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700 text-white"}`}
           >
             {loading ? (

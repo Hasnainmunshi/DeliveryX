@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 
@@ -22,7 +23,7 @@ type propType = {
   onSuccess?: () => void;
 };
 
-function RegisterForm({ previousStep, onSuccess }: propType) {
+function RegisterForm({ previousStep }: propType) {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -38,6 +39,7 @@ function RegisterForm({ previousStep, onSuccess }: propType) {
     mobile: "",
   });
   const [serverError, setServerError] = useState("");
+  const router = useRouter();
 
   // validate
   const validate = () => {
@@ -51,17 +53,25 @@ function RegisterForm({ previousStep, onSuccess }: propType) {
     return !Object.values(newErrors).some(Boolean);
   };
 
+  const isDisabled =
+    loading ||
+    !form.name.trim() ||
+    !form.email.trim() ||
+    !form.password.trim() ||
+    !form.mobile.trim();
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
     setServerError("");
     try {
-      const result = await axios.post("/api/auth/register", form);
-      console.log("data", result.data);
-      onSuccess?.();
-    } catch (err: any) {
-      setServerError(err.response?.data?.message || "Register failed");
+      await axios.post("/api/auth/register", form);
+      router.push("/login");
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        setServerError(err.response?.data?.message || "Register failed");
+      }
     } finally {
       setLoading(false);
     }
@@ -164,19 +174,9 @@ function RegisterForm({ previousStep, onSuccess }: propType) {
           <motion.button
             whileTap={{ scale: 0.97 }}
             type="submit"
-            disabled={
-              loading ||
-              !form.name.trim() ||
-              !form.email.trim() ||
-              !form.password.trim() ||
-              !form.mobile.trim()
-            }
+            disabled={isDisabled}
             className={`w-full inline-flex items-center justify-center gap-2  py-3 rounded-2xl shadow-lg transition-colors font-semibold text-base ${
-              loading ||
-              !form.name.trim() ||
-              !form.email.trim() ||
-              !form.password.trim() ||
-              !form.mobile.trim()
+              isDisabled
                 ? "bg-gray-400 cursor-not-allowed"
                 : "text-white bg-green-600 hover:bg-green-700"
             }`}
@@ -197,7 +197,7 @@ function RegisterForm({ previousStep, onSuccess }: propType) {
           <div className="flex-1 border-b border-gray-200"></div>
         </div>
         <button
-          onClick={() => signIn("google")}
+          onClick={() => signIn("google", { callbackUrl: "/" })}
           className="w-full flex items-center justify-center gap-2 border border-gray-300 py-2 rounded-xl text-sm font-medium hover:bg-gray-50 transition"
         >
           <FcGoogle className="w-5 h-5" />
